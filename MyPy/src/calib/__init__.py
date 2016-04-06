@@ -1,5 +1,5 @@
 '''
-Created on 2016年3月26日
+Created on 2016年4月1日
 
 @author: tanke
 '''
@@ -8,31 +8,102 @@ Created on 2016年3月26日
 # coding = utf-8
 
 import sys
-#import cv2
+import cv2
 import numpy as np
 import numpy.ctypeslib as npct
 from PyQt4 import QtCore, QtGui
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT, FigureCanvasQTAgg
-import datacalib
+import datacalib as dc
+import solvehomo as sh
 
-# 异常申明
-
+'''
+    @para CalibData 是封装标定数据和提供图像处理计算函数的类
+    
+'''
+class CalibData(object):
+    def __init__(self):
+        # 读入的文件名list
+        self.picName = []# 图片文件名列表
+        
+        self.images = []# 遍历的图像mat 列表
+        self.number = -1# 当前载入、处理的文件序号
+        self.imgSize = None # 当前图像的尺寸np.array类型
+        
+        self.corners = []# 计算当前单应的角点列表[(x,y),...]
+        self.nCorner = -1# 计算当前单应的圆上的取点序号，总数为+1
+        
+        # 经纬球参数
+        self.sphereSize = None
+        
+    def set_picName(self):
+        self.picName = dc.data_calib()
+    
+    def append_image(self):
+        self.number += 1
+        name = self.picName[self.number]
+        img = cv2.GaussianBlur(plt.imread(name), (5,5), 0)
+        self.images.append(img)
+        self.imgSize = np.array(self.current_image().shape)
+        
+    def current_image(self):
+        #print(self.images[self.number].dtype) #uin8类型
+        return self.images[self.number]
+       
+    def append_corner(self, val):
+        self.corners.append(val)
+        self.nCorner += 1
+    
+    def current_corner(self):
+        return self.corners[self.nCorner]
+    
+    def init_corners(self):
+        self.nCorner = -1
+        self.corners.clear()
+    
+    def set_sphereSize(self):
+        while self.sphereSize is None:
+            try:
+                nH = int(input("Please input jingxian number: "))
+                #nV = int(input("Please input vertical number:"))
+                self.sphereSize = [nH]
+            except ValueError:
+                print("Error!Please input again!")
+                self.sphereSize = None
+                pass
+    def corner_subpix(self, clickPoint):
+        # 方案一：调用python的OpenCV角点提取函数cornerSubPix
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 40, 0.001)
+        subpix = cv2.cornerSubPix(np.float32(self.images[self.number]), np.float32(np.array([clickPoint])),(5,5),(-1,-1),criteria)
+        return subpix
+        '''
+        # 方案二：调用C程序
+        array_img = npct.ndpointer(dtype = np.double, ndim = 2, shape = \
+                                   (self.imgSize[0], self.imgSize[1]), flags = "CONTIGUOUS")
+        array_xy = npct.ndpointer(dtype = np.double, ndim = 1, shape = (2,), flags = "CONTIGUOUS")
+        array_size = npct.ndpointer(dtype = np.int, ndim = 1, shape = (2,), flags = "CONTIGUOUS")
+        libCorner = npct.load_library("libC2Py.dll", "d:/Code/eclipse/C2Py/Debug/")
+        libCorner.corner_sub_pix.argtypes = [array_img, array_xy, array_size]
+        libCorner.corner_sub_pix.restypes = None
+        
+        libCorner.corner_sub_pix(np.double(self.current_image()), np.double(clickPoint), self.imgSize)
+        '''
+        
+    def solve_homography(self):
+        sh.compute_homography(self.corners, self.nCorner, self.imgSize)
+        ## 需要补充
+        pass
+        
+'''
+    @para CalibWindow 是 封装GUI的pyqt4、matplotlib的类
+    
+'''        
 class CalibWindow(QtGui.QWidget):
     def __init__(self):
         super(CalibWindow, self).__init__()
         
-        # 读入的文件名list
-        self.picName = []# 图片文件名列表
-        self.images = []# 遍历的图像mat 列表
-        
-        self.number = -1# 当前载入、处理的文件序号
-        self.imgSize = None # 当前图像的尺寸np.array类型
-        self.points = []# 当前图像的角点[(x,y),...]
-        self.nCorner = -1# 当前图像的取点数目
-        
-        # 经线数目
-        self.sphereSize = None
+        # 标定数据实例
+        self.data = None
         
         # plt中的figure实例，即将要显示的图像
         self.fig = plt.figure()
@@ -46,20 +117,15 @@ class CalibWindow(QtGui.QWidget):
         self.addFileButton = QtGui.QPushButton("Add File")
         self.addFileButton.clicked.connect(self.add_file) # 信号与槽链接/点击按钮...读取文件名
         # PyQt4.QtGui中的按钮对象
-        self.playButton = QtGui.QPushButton("Play images")
-        self.playButton.clicked.connect(self.play)# 信号与槽链接 /点击按钮...显示下一幅图像
-        
         self.setParaButton = QtGui.QPushButton("Set Parameters")
         self.setParaButton.clicked.connect(self.set_para)
+        # PyQt4.QtGui中的按钮对象
+        self.playButton = QtGui.QPushButton("Play images")
+        self.playButton.clicked.connect(self.play)# 信号与槽链接 /点击按钮...显示下一幅图像
         
         # matplotlib中的鼠标事件和自定义的槽链接/单击...记录角点
         self.canvas.mpl_connect("button_press_event", self.on_button_press)
         
-        # matplotlib 中的键盘事件和自定义的槽链/按下...计算一个H
-        #self.canvas.mpl_connect("key_press_event", self.on_key_press)
-        
-        # 自定义信号和槽（每幅图像所有角点，满足条件发射信号，执行显示下一幅图像等操作）
-        #self.connect(self, QtCore.SIGNAL("play_next()"), self.play)
         
         # Gui 布局
         layout = QtGui.QVBoxLayout()
@@ -73,39 +139,25 @@ class CalibWindow(QtGui.QWidget):
         
         
     def add_file(self):
-        self.picName = datacalib.data_calib()
-        self.images = []
-        self.number = -1
+        self.data = CalibData()# 初始化标定数据实例
+        self.data.set_picName()# 读取图像文件名序列
         
     def set_para(self):
+        # 设置经纬球参数
         # 方案一：弹出一个对话框
         
         # 方案二：直接在console中输入
-        while self.sphereSize is None:
-            try:
-                nH = int(input("Please input jingxian number: "))
-                #nV = int(input("Please input vertical number:"))
-                self.sphereSize = [nH]
-            except ValueError:
-                print("Error!Please input again!")
-                self.sphereSize = None
-                pass
+        self.data.set_sphereSize()
         print("Next...")
     
     def play(self):
         ax = plt.gca()
         ax.hold(False)
         try:
-            self.number += 1
-            name = self.picName[self.number]
-            self.images.append(plt.imread(name))
-            ax.imshow(self.images[self.number], cmap = plt.cm.gray)
-            self.imgSize = np.array(self.images[self.number].shape)
-            
-            #print(self.images[self.number].dtype) #uin8类型
-            
+            self.data.append_image()
+            ax.imshow(self.data.current_image(), cmap = plt.cm.gray)
+            self.data.init_corners()
             self.canvas.draw()
-            self.nCorner = -1
             print(">>> click the cross point on same circle...")
         except IndexError:
             print("没有图片啦!")
@@ -115,23 +167,19 @@ class CalibWindow(QtGui.QWidget):
         # test
         if event.inaxes is None:
             return
-        self.points.append(np.array([event.xdata, event.ydata]))
-        self.nCorner += 1
-        print(self.nCorner, event.xdata, event.ydata)# 改成画点
-        # 角点提取函数test中改event.xdata/ydata
-        #criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 40, 0.001)
-        #corners = cv2.cornerSubPix(np.double(self.images[self.number]), np.double(np.array([event.xdata, event.ydata])),(5,5),(-1,-1),criteria)
-        #print(corners)
-        self.corner_subpix(np.double(self.points[self.nCorner]))
-        print(self.points[self.nCorner],self.imgSize)
+        clickPoint = np.array([event.xdata, event.ydata])
+        print(clickPoint)
+        subpix = self.data.corner_subpix(clickPoint)
+        self.data.append_corner(subpix)
+        print(self.data.nCorner, self.data.current_corner(), self.data.imgSize)# 改成画点
         
-        # 标记出角点
+        # 标记出单击点
         ax = plt.gca()
         ax.hold(True)
         
-        ax.plot(event.xdata, event.ydata, "bo", markerfacecolor = "red")#需要改
-        ax.set_xlim(0,self.imgSize[1])
-        ax.set_ylim(self.imgSize[0],0)
+        ax.plot(event.xdata, event.ydata, "bo", markerfacecolor = "red")
+        ax.set_xlim(0,self.data.imgSize[1])
+        ax.set_ylim(self.data.imgSize[0],0)
         self.canvas.draw()
         
         
@@ -147,35 +195,28 @@ class CalibWindow(QtGui.QWidget):
         if event.key() == QtCore.Qt.Key_Return:
             print("enter")
             # 计算H
-        
-            print(self.nCorner, self.points)
-        
-        
-            # 初始化角点数据
-            self.nCorner = -1
-            self.points.clear()
+            if self.data.nCorner > 3:
+                
+                self.data.solve_homography()
+                print(self.data.nCorner + 1, self.data.corners)
+            else:
+                print("Not enough corners!")
+            # 初始化单应的角点列表数据
+            self.data.init_corners()
             print(">>> click the cross point on same circle OR play next image.")
         '''
         if event.key == QtCore.Qt.Key_0 and self.nCorner == 0:
             # 发射信号，处理下一幅图片
             self.emit(QtCore.SIGNAL("play_next()"))
         '''
-    def corner_subpix(self, clickCorner):
-        array_img = npct.ndpointer(dtype = np.double, ndim = 2, shape = \
-                                   (self.imgSize[0], self.imgSize[1]), flags = "CONTIGUOUS")
-        array_xy = npct.ndpointer(dtype = np.double, ndim = 1, shape = (2,), flags = "CONTIGUOUS")
-        array_size = npct.ndpointer(dtype = np.int, ndim = 1, shape = (2,), flags = "CONTIGUOUS")
-        libCorner = npct.load_library("libC2Py.dll", "d:/Code/eclipse/C2Py/Debug/")
-        libCorner.corner_sub_pix.argtypes = [array_img, array_xy, array_size] 
-        libCorner.corner_sub_pix.restypes = None
-        libCorner.corner_sub_pix(np.double(self.images[self.number]), clickCorner, self.imgSize)   
-        #return clickCorner
+    
 
     
         
-# begin        
-app = QtGui.QApplication(sys.argv)
-calibUi = CalibWindow()
-calibUi.show()
-
-sys.exit(app.exec_())
+# begin
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    calibUi = CalibWindow()
+    calibUi.show()
+    sys.exit(app.exec_())
+        
