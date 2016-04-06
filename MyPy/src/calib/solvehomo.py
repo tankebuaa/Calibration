@@ -77,7 +77,7 @@ def compute_homography(corner, N, ns):
             mrep = mrep/np.dot(np.ones((3,1)), mrep[2,:])
             
             m_err = m[0:2,:] - mrep[0:2,:]
-            m_err = m_err[:]
+            #m_err = m_err[:]
             
             
             
