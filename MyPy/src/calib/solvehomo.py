@@ -7,9 +7,9 @@ import numpy as np
 
 def compute_homography(corner, N, ns):
     '''计算平面到图像的单应矩阵
-    @param corner: 图像上的点，传入的是一个列表，列表元素为array点
-    @param N:    计算单应的图像点数
-    @param ns:    球上点的数目
+    @param corner 图像上的点，传入的是一个列表，列表元素为array点
+    @param N 计算单应的图像点数
+    @param ns 球上点的数目
     '''
     # 先将图像点转化为二维数组m
     m = np.ones((3, N), dtype = np.double)

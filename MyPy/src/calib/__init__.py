@@ -18,7 +18,7 @@ import datacalib as dc
 import solvehomo as sh
 
 '''
-    @para CalibData 是封装标定数据和提供图像处理计算函数的类
+    @param CalibData 是封装标定数据和提供图像处理计算函数的类
     
 '''
 class CalibData(object):
@@ -95,7 +95,7 @@ class CalibData(object):
         pass
         
 '''
-    @para CalibWindow 是 封装GUI的pyqt4、matplotlib的类
+    @param CalibWindow 是 封装GUI的pyqt4、matplotlib的类
     
 '''        
 class CalibWindow(QtGui.QWidget):
