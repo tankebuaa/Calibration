@@ -66,7 +66,7 @@ class CalibData(object):
             try:
                 nH = int(input("Please input jingxian number: "))
                 #nV = int(input("Please input vertical number:"))
-                self.sphereSize = [nH]
+                self.sphereSize = nH
             except ValueError:
                 print("Error!Please input again!")
                 self.sphereSize = None
@@ -90,7 +90,7 @@ class CalibData(object):
         '''
         
     def solve_homography(self):
-        sh.compute_homography(self.corners, self.nCorner, self.imgSize)
+        sh.compute_homography(self.corners, self.nCorner + 1, self.sphereSize)
         ## 需要补充
         pass
         
@@ -167,20 +167,23 @@ class CalibWindow(QtGui.QWidget):
         # test
         if event.inaxes is None:
             return
-        clickPoint = np.array([event.xdata, event.ydata])
-        print(clickPoint)
-        subpix = self.data.corner_subpix(clickPoint)
-        self.data.append_corner(subpix)
-        print(self.data.nCorner, self.data.current_corner(), self.data.imgSize)# 改成画点
+        if event.button is 1:
+            clickPoint = np.array([event.xdata, event.ydata])
+            print(clickPoint)
+            subpix = self.data.corner_subpix(clickPoint)
+            self.data.append_corner(subpix)
+            print(self.data.nCorner, self.data.current_corner(), self.data.imgSize)# 改成画点
         
-        # 标记出单击点
-        ax = plt.gca()
-        ax.hold(True)
+            # 标记出单击点
+            ax = plt.gca()
+            ax.hold(True)
         
-        ax.plot(event.xdata, event.ydata, "bo", markerfacecolor = "red")
-        ax.set_xlim(0,self.data.imgSize[1])
-        ax.set_ylim(self.data.imgSize[0],0)
-        self.canvas.draw()
+            ax.plot(event.xdata, event.ydata, "bo", markerfacecolor = "red")
+            ax.set_xlim(0,self.data.imgSize[1])
+            ax.set_ylim(self.data.imgSize[0],0)
+            self.canvas.draw()
+            
+        
         
         
     # 当按下回车键，计算一个H
@@ -193,12 +196,12 @@ class CalibWindow(QtGui.QWidget):
     #重写Qt键盘事件函数  
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Return:
-            print("enter")
+            #print("enter")
             # 计算H
-            if self.data.nCorner > 3:
-                
+            if self.data.nCorner > 2:
+                print("Compute H...")
                 self.data.solve_homography()
-                print(self.data.nCorner + 1, self.data.corners)
+                #print(self.data.nCorner + 1, self.data.corners)
             else:
                 print("Not enough corners!")
             # 初始化单应的角点列表数据
