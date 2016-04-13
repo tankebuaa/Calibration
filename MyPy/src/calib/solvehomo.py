@@ -38,14 +38,14 @@ def compute_homography(corner, N, ns):
     Hnorm = np.array([[1/scxx, 0, -mxx/scxx], [0, 1/scyy, -myy/scyy], [0,0,1]])
     invHnorm = np.array([[scxx , 0, mxx], [0, scyy, myy], [0,0,1]])
     
-    mn = np.dot(Hnorm, m)
+    mn = Hnorm @ m
     # Compute the homography between m and mn
     # build the matix
     L = np.zeros((2*N, 9), dtype = np.double)
     L[0:2*N:2, 0:3] = M.T
     L[1:2*N:2, 3:6] = M.T
-    L[0:2*N:2, 6:9] = -(np.dot(np.ones((3,1)), mn[0,:]) * M).T
-    L[1:2*N:2, 6:9] = -(np.dot(np.ones((3,1)), mn[1,:]) * M).T
+    L[0:2*N:2, 6:9] = -((np.ones(3,1) @ mn[0,:]) * M).T
+    L[1:2*N:2, 6:9] = -((np.ones(3,1) @ mn[1,:]) * M).T
     
     L = np.dot(L.t, L)
     U, S, V = np.linalg.svd(L, full_matrices = True)
@@ -55,7 +55,7 @@ def compute_homography(corner, N, ns):
     Hrem = hh.reshape((3,3))
     
     # Final homography:
-    H = np.dot(invHnorm, Hrem)
+    H = invHnorm @ Hrem
     
     # Homography refinement if there are more than 4 points
     if N > 4:
@@ -65,21 +65,33 @@ def compute_homography(corner, N, ns):
         
         for iter in range(10):
             
-            mrep = np.dot(H, M)
+            mrep = H @ M
             
             J = np.zeros(2*N, 8)
             
-            MMM = M/(np.dot(np.ones((3,1)), mrep[2,:]))
+            MMM = M/(np.ones((3,1)) @ mrep[2,:])
             
             J[0:2*N:2, 0:3] = -MMM.T
             J[1:2*N:2, 3:6] = -MMM.T
             
-            mrep = mrep/np.dot(np.ones((3,1)), mrep[2,:])
+            mrep = mrep/(np.ones((3,1)) @ mrep[2,:])
             
             m_err = m[0:2,:] - mrep[0:2,:]
             #m_err = m_err[:]
             
+            MMM2 = np.dot(np.ones((3,1)), mrep[0, :]) * MMM
+            MMM3 = np.dot(np.ones((3,1)), mrep[1, :]) * MMM
             
+            J[0:2*N:2, 6:8] = MMM2[0:2, :]
+            J[1:2*N:2, 6:8] = MMM3[0,2, :]
             
-    
+            MMM = (M / np.dot(np.ones((3,1)), mrep[2, :])).T
+            hh_innov = np.linalg.inv(J.T @ J) @ J.T @ m_err
+            hhv_up = hhv - hh_innov
+            
+            H_up = hhv_up.reshape((3,3))
+            
+            hhv = hhv_up
+            H = H_up
+            
     
