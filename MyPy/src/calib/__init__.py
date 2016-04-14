@@ -19,7 +19,7 @@ import solvehomo as sh
 
 '''
     @param CalibData 是封装标定数据和提供图像处理计算函数的类
-    
+    mpl_ref:2657
 '''
 class CalibData(object):
     def __init__(self):
@@ -104,21 +104,21 @@ class CalibWindow(QtGui.QWidget):
         
         # 标定数据实例
         self.data = None
+        self.add_file()
+        self.set_para()
+        self.create_window()
         
+    def create_window(self):
         # plt中的figure实例，即将要显示的图像
         self.fig = plt.figure()
         
         # Gui 对象
         # matplotlib.backend.backend_qt4agg的画布-》转到QObject
         self.canvas = FigureCanvasQTAgg(self.fig)
+        self.canvas.setFocus()
         # matplotlib.backend.backend_qt4agg的导航工具栏对象->转到QObject
         self.toolBar = NavigationToolbar2QT(self.canvas, self)
-        # PyQt4.QtGui中的按钮对象
-        self.addFileButton = QtGui.QPushButton("Add File")
-        self.addFileButton.clicked.connect(self.add_file) # 信号与槽链接/点击按钮...读取文件名
-        # PyQt4.QtGui中的按钮对象
-        self.setParaButton = QtGui.QPushButton("Set Parameters")
-        self.setParaButton.clicked.connect(self.set_para)
+        
         # PyQt4.QtGui中的按钮对象
         self.playButton = QtGui.QPushButton("Play images")
         self.playButton.clicked.connect(self.play)# 信号与槽链接 /点击按钮...显示下一幅图像
@@ -129,11 +129,10 @@ class CalibWindow(QtGui.QWidget):
         
         # Gui 布局
         layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.toolBar)
-        layout.addWidget(self.addFileButton)
-        layout.addWidget(self.setParaButton)
         layout.addWidget(self.playButton)
         layout.addWidget(self.canvas)
+        layout.addWidget(self.toolBar)
+        
         self.setLayout(layout)
         self.setWindowTitle("Python标定程序")
         
@@ -143,19 +142,15 @@ class CalibWindow(QtGui.QWidget):
         self.data.set_picName()# 读取图像文件名序列
         
     def set_para(self):
-        # 设置经纬球参数
-        # 方案一：弹出一个对话框
-        
-        # 方案二：直接在console中输入
         self.data.set_sphereSize()
-        print("Next...")
+        print("Play Image...")
     
     def play(self):
         ax = plt.gca()
         ax.hold(False)
         try:
             self.data.append_image()
-            ax.imshow(self.data.current_image(), cmap = plt.cm.gray)
+            ax.imshow(self.data.current_image(), cmap = "gray")
             self.data.init_corners()
             self.canvas.draw()
             print(">>> click the cross point on same circle...")
@@ -217,9 +212,11 @@ class CalibWindow(QtGui.QWidget):
     
         
 # begin
-if __name__ == "__main__":
+def main():
     app = QtGui.QApplication(sys.argv)
     calibUi = CalibWindow()
     calibUi.show()
     sys.exit(app.exec_())
-        
+    
+if __name__ == "__main__":
+    main()
