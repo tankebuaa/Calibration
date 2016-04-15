@@ -13,13 +13,14 @@ import numpy as np
 import numpy.ctypeslib as npct
 from PyQt4 import QtCore, QtGui
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT, FigureCanvasQTAgg
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg, NavigationToolbar2QT
 import datacalib as dc
 import solvehomo as sh
 
 '''
     @param CalibData 是封装标定数据和提供图像处理计算函数的类
-    mpl_ref:2657
+    
 '''
 class CalibData(object):
     def __init__(self):
@@ -96,7 +97,7 @@ class CalibData(object):
         
 '''
     @param CalibWindow 是 封装GUI的pyqt4、matplotlib的类
-    
+    mpl_ref:2657
 '''        
 class CalibWindow(QtGui.QWidget):
     def __init__(self):
@@ -115,6 +116,7 @@ class CalibWindow(QtGui.QWidget):
         # Gui 对象
         # matplotlib.backend.backend_qt4agg的画布-》转到QObject
         self.canvas = FigureCanvasQTAgg(self.fig)
+        self.canvas.setFocusPolicy(QtCore.Qt.StrongFocus)#QtCore.Qt.StrongFocus接受Tab和鼠标点击来激活当前焦点
         self.canvas.setFocus()
         # matplotlib.backend.backend_qt4agg的导航工具栏对象->转到QObject
         self.toolBar = NavigationToolbar2QT(self.canvas, self)
@@ -125,7 +127,10 @@ class CalibWindow(QtGui.QWidget):
         
         # matplotlib中的鼠标事件和自定义的槽链接/单击...记录角点
         self.canvas.mpl_connect("button_press_event", self.on_button_press)
+        self.canvas.mpl_connect("key_press_event", self.on_key_press)
         
+        # 自定义Qt事件与槽链接
+        self.connect(self, QtCore.SIGNAL("play_next()"), self.play)
         
         # Gui 布局
         layout = QtGui.QVBoxLayout()
@@ -159,7 +164,6 @@ class CalibWindow(QtGui.QWidget):
             pass
 
     def on_button_press(self, event):
-        # test
         if event.inaxes is None:
             return
         if event.button is 1:
@@ -178,15 +182,26 @@ class CalibWindow(QtGui.QWidget):
             ax.set_ylim(self.data.imgSize[0],0)
             self.canvas.draw()
             
-        
-        
-        
-    # 当按下回车键，计算一个H
-    '''
-    # 不知道为什么matplotlib的键盘事件无响应...
     def on_key_press(self, event):
-        if event.inaxes is None:
-            return
+        '''
+                            当按下回车键，计算一个H;按下SHift+n，处理下一副图像
+        '''
+        key_press_handler(event, self.canvas, self.toolBar)# 绑定mpl按键到画布和工具栏
+        if event.key is "enter":
+            # 计算H
+            if self.data.nCorner > 2:
+                print("Compute H...")
+                self.data.solve_homography()
+                #print(self.data.nCorner + 1, self.data.corners)
+            else:
+                print("Not enough corners!")
+            # 初始化单应的角点列表数据
+            self.data.init_corners()
+            print(">>> click the cross point on same circle OR play next image.")
+        elif event.key is "N":
+            print(event.key)
+            self.emit(QtCore.SIGNAL("play_next()"))
+            
     '''
     #重写Qt键盘事件函数  
     def keyPressEvent(self, event):
@@ -202,16 +217,12 @@ class CalibWindow(QtGui.QWidget):
             # 初始化单应的角点列表数据
             self.data.init_corners()
             print(">>> click the cross point on same circle OR play next image.")
-        '''
+        
         if event.key == QtCore.Qt.Key_0 and self.nCorner == 0:
             # 发射信号，处理下一幅图片
             self.emit(QtCore.SIGNAL("play_next()"))
         '''
-    
-
-    
-        
-# begin
+            
 def main():
     app = QtGui.QApplication(sys.argv)
     calibUi = CalibWindow()
@@ -220,3 +231,4 @@ def main():
     
 if __name__ == "__main__":
     main()
+        
