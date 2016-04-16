@@ -23,8 +23,8 @@ while a == None:
     except ValueError as err:
         print(err)
 print(a)
-#path = b"d:/Code/eclipse/MyPy/src/test/left01.png"
-path = "d:/Code/eclipse/MyPy/src/test/left0{0}.png".format(a)
+#path = b"d:/Code/eclipse/Calibration/Image/Picture0.jpg"
+path = "d:/Code/eclipse/Calibration/Image/Picture{0}.jpg".format(a)
 print(path)
 dll.showImage(path.encode("utf-8"))
 
@@ -43,7 +43,7 @@ for x in range(100,110):
 im.show()
 
 '''
-img = cv2.imread("d:/Code/eclipse/MyPy/src/test/left01.png")
+img = cv2.imread("d:/Code/eclipse/Calibration/Image/Picture0.jpg")
 cv2.namedWindow("Image")
 cv2.imshow("Image", img)
 cv2.waitKey(0)

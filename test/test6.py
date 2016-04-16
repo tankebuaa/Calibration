@@ -10,7 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 # 读入为num.array类型:M*N*D
-img = cv2.imread("I1.jpg")
+img = cv2.imread("../Image/Picture0.jpg")
 b, g, r = cv2.split(img)
 img2 = cv2.merge([r,g,b])
 
