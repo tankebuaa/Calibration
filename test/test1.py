@@ -1,43 +1,22 @@
-'''
-Created on 2016年3月25日
+#!/usr/bin/env python3
+# coding=utf-8
 
-@author: tanke
-'''
-#!/usr/bin/env python
-
-#import numpy as np
-import cv2
+import numpy as np
 import matplotlib.pyplot as plt
 
-# 读入为num.array类型:M*N*D
-img = cv2.imread("I1.jpg")
-b, g, r = cv2.split(img)
-img2 = cv2.merge([r,g,b])
+def on_press(event):
+    if event.inaxes is None: return
+    for line in event.inaxes.lines:
+        if event.key=='enter':
+            visible = line.get_visible()
+            line.set_visible(not visible)
 
-## OpenCV 默认读入和输出为BGR
-cv2.namedWindow("imgBGR")
-cv2.imshow("imgBGR", img)
-cv2.waitKey(0)
+    event.inaxes.figure.canvas.draw()
+    print("press",event.key,event.xdata)
+fig, ax = plt.subplots(1)
 
-cv2.namedWindow("imgRGB")
-cv2.imshow("imgRGB", img2)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+fig.canvas.mpl_connect('key_press_event', on_press)
 
-## MatPlot 默认读入和输出为RGB
-fig = plt.figure()
-#BGR
-ax1 = fig.add_subplot(2,1,1)
-ax1.imshow(img)
-plt.xticks([]),plt.yticks([])
-#RGB
-ax2 = fig.add_subplot(2,1,2)
-ax2.imshow(img2)
-plt.xticks([]),plt.yticks([])
-#show in matplot
+ax.plot(np.random.rand(2, 20))
+
 plt.show()
-'''
-mat = np.float32(img)
-print(mat[100,100,1])
-
-'''
