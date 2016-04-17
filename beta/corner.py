@@ -6,6 +6,9 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+'''
+    遍历半径（在阈值内），计算灰度变化率，得到两条曲线相交的范围，在总半径阈值内，计算斜率分类两条曲线，分别拟合，计算交点
+'''
 img = cv2.imread(r"d:\Code\matlabspace\calibration\circle_sphere\201602\20160407\Image13.bmp",0)
 
 fig = plt.figure()
@@ -30,5 +33,14 @@ kp = fast.detect(blur, None)
 img3 = np.empty_like(img)
 img3 = cv2.drawKeypoints(blur, kp, img3, color = (0,255,0))
 plt.subplot(1,2,2), plt.imshow(img3, cmap="gray"), plt.title("Set NonMaxSuppresion")
+
+# fft变换
+f = np.fft.fft2(img)
+fshift = np.fft.fftshift(f)
+result = 20 * np.log(np.abs(fshift))
+plt.figure()
+plt.imshow(result, cmap = "gray")
+
 plt.show()
 os.system("pause")
+
