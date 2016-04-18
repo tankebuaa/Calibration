@@ -46,3 +46,35 @@ def end(func):
 def test(a):
     print("20160418{0}".format(a))
 test("test")
+
+def disp(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kw):
+        print("Call %s"%func.__name__)
+        return func(*args, **kw)
+    return wrapper
+
+@disp
+def test2():
+    print("test22")
+    
+test2()
+
+def run(name):
+    #
+    def decorator(func):
+        #
+        @functools.wraps(func)
+        def wrapper(*args, **kw):
+            print("run %s:%s" %(func.__name__, name))
+            return func(*args, **kw)
+        # 
+        return wrapper
+    # 
+    return decorator
+
+@run("waiting...")
+def hello():
+    print("Hello World!")
+hello()
+    
