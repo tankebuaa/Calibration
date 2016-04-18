@@ -7,9 +7,9 @@ import cv2
 import matplotlib.pyplot as plt
 
 '''
-    遍历半径（在阈值内），计算灰度变化率，得到两条曲线相交的范围，在总半径阈值内，计算斜率分类两条曲线，分别拟合，计算交点
+    选取初值点，对范围内的点提取亚像素点，遍历半径（在阈值内）内剔除，得到两条曲线相交的范围，计算斜率分类两条曲线，分别拟合，计算交点
 '''
-img = cv2.imread(r"d:\Code\matlabspace\calibration\circle_sphere\201602\20160407\Image13.bmp",0)
+img = cv2.imread("d:/Code/matlabspace/calibration/circle_sphere/201602/20160407/Image12.bmp",0)
 
 fig = plt.figure()
 ax1 = fig.add_subplot(121)
