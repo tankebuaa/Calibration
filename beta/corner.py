@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 '''
     选取初值点，对范围内的点提取亚像素点，遍历半径（在阈值内）内剔除，得到两条曲线,用八联通搜寻分组，计算斜率分类两条曲线，分别拟合，计算交点
+    选点应该对称，靠近摄像机，多幅图像，计算单应
 '''
 img = cv2.imread("d:/Code/matlabspace/calibration/circle_sphere/201602/20160407/Image12.bmp",0)
 
