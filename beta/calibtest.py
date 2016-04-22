@@ -34,7 +34,7 @@ class CalibData(object):
         self.corners = []# 计算当前单应的角点列表[(x,y),...]
         self.nCorner = -1# 计算当前单应的圆上的取点序号，总数为+1
         
-        # 经纬球参数
+        # 经纬球参数(加上阈值等，写成对话框在面板上)
         self.sphereSize = None
         
     def set_picName(self):
