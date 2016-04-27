@@ -6,59 +6,73 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1115</width>
-    <height>795</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Python标定程序</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QPushButton" name="setButton">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>30</y>
-     <width>177</width>
-     <height>43</height>
+     <x>20</x>
+     <y>20</y>
+     <width>75</width>
+     <height>23</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <widget class="QPushButton" name="setButton">
-        <property name="text">
-         <string>Set Parameters</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="playButton">
-        <property name="text">
-         <string>Play</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="1" column="0">
-     <widget class="MplCanvasWrapper" name="mplCanvas" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
-   </layout>
+   <property name="text">
+    <string>Set</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="playButton">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>20</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Play</string>
+   </property>
+  </widget>
+  <widget class="MplCanvas" name="mplCanvas" native="true">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>60</y>
+     <width>800</width>
+     <height>600</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>800</width>
+     <height>600</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>4000</width>
+     <height>3000</height>
+    </size>
+   </property>
   </widget>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>MplCanvasWrapper</class>
+   <class>MplCanvas</class>
    <extends>QWidget</extends>
-   <header>mplcanvaswrapper.h</header>
+   <header>mplcanvas.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
