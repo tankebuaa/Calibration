@@ -2,25 +2,28 @@
 import sys
 from PyQt4 import QtCore, QtGui
 from uiwindow import Ui_CalibWindow# @python.exe -c"import PyQt4.uic.pyuic" name.ui -o name.py
-import datacalib as dc
+from uidlg import Ui_SetDialog
 
 class CalibWnd(Ui_CalibWindow):
     '''
-    UI顶层交互界面，包裹wrap数据进行封装
+    UI顶层交互代码，分离纯界面，并包裹wrap数据进行封装
     '''
     def __init__(self):
         super(CalibWnd, self).__init__()
         self.setupUi(self)
-        self.setButton.clicked.connect(self.setPara)
+        self.setButton.clicked.connect(self.set_para)
         self.playButton.clicked.connect(self.play)
         
     def set_para(self):
-        self.mplCanvas.set_para()
-        pass
+        self.dlg = Ui_SetDialog()
+        self.dlg.setupUi(self.dlg)
+        if self.dlg.exec_():
+            print(int(self.dlg.numberEdit.text()))
+            self.mplCanvas.set_para(int(self.dlg.numberEdit.text()))
         
-    def play():
+    def play(self):
         self.mplCanvas.play()
-        pass
+        
         
 def main():
     '''
