@@ -17,8 +17,7 @@ class MplData(object):
         self.picName = []#存放文件名的list
         self.images = []#保存图像的list，元素为mat
         self.no = -1#当前指向图像的序号
-        
-        self.LineNumber = 36#一周所包含的点数
+        self.points = []#所有中心点
         
     def set_picName(self):#读入文件名列表
         self.picName = dc.data_calib()
@@ -30,8 +29,7 @@ class MplData(object):
         self.images.append(img)
         
     def set_para(self, *args):
-        self.LineNumber = args[0]
-        print(args[0])
+        self.LINE_NUM,self.WND_R,self.DEL_R,self.HESSIAN_SIGMA,self.CONNECT_R,self.GRAY_THR,self.EIGVAL_THR=args[0]
         
     def get_subpixel(self, point):
         return point
@@ -80,11 +78,10 @@ class MplCanvas(QtGui.QWidget):
         ax.hold(False)
         try:
             self.data.append_image()
-            
             ax.imshow(self.data.images[self.data.no], cmap = "gray")
-            #cv2.imshow("image",self.data.images[self.data.no])
             self.canvas.draw()
             print(">>> click the cross point on same circle...")
+            self.data.points.append([])
         except IndexError:
             print("There is no image!")
             pass
@@ -105,10 +102,12 @@ class MplCanvas(QtGui.QWidget):
             y,x = self.data.images[self.data.no].shape
             ax.set_xlim(0, x)
             ax.set_ylim(y, 0)
-            
             self.canvas.draw()
+            #存入点列表
+            self.data.points[self.data.no].append(subpix)
             
     def on_key_press(self, event):
+        #绑定按键事件到画布和工具栏
         key_press_handler(event, self.canvas, self.toolbar)
         if event.key is "enter":
             print(event.key)

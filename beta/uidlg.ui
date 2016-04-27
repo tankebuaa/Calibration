@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>634</width>
-    <height>426</height>
+    <width>384</width>
+    <height>530</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -17,13 +17,13 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>设置参数</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>260</x>
-     <y>360</y>
+     <x>30</x>
+     <y>470</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -51,11 +51,170 @@
   <widget class="QLineEdit" name="numberEdit">
    <property name="geometry">
     <rect>
-     <x>140</x>
+     <x>160</x>
      <y>50</y>
      <width>121</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="text">
+    <string>36</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="wndrLabel">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>110</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>窗口半宽</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="wndrEdit">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>100</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>25</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="delrLabel">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>160</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>剔除半宽</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="delrEdit">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>150</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>6</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="crLabel">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>260</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>连通半宽</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="crEdit">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>250</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>1</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="gthLabel">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>310</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>灰度阈值</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="gthEdit">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>300</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>0.05</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="ethLabel">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>360</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>特征阈值</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="ethEdit">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>350</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>0.0015</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="hgLabel">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>210</y>
+     <width>54</width>
+     <height>12</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>高斯因子</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="hgEdit">
+   <property name="geometry">
+    <rect>
+     <x>160</x>
+     <y>200</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>3.0</string>
    </property>
   </widget>
  </widget>

@@ -13,17 +13,26 @@ class CalibWnd(Ui_CalibWindow):
         self.setupUi(self)
         self.setButton.clicked.connect(self.set_para)
         self.playButton.clicked.connect(self.play)
+        self.exitButton.clicked.connect(self.exit)
+        self.saveButton.clicked.connect(self.save)
         
     def set_para(self):
         self.dlg = Ui_SetDialog()
         self.dlg.setupUi(self.dlg)
         if self.dlg.exec_():
-            print(int(self.dlg.numberEdit.text()))
-            self.mplCanvas.set_para(int(self.dlg.numberEdit.text()))
+            para = (int(self.dlg.numberEdit.text()), int(self.dlg.wndrEdit.text()),\
+            int(self.dlg.delrEdit.text()), float(self.dlg.hgEdit.text()), int(self.dlg.crEdit.text()),\
+            float(self.dlg.gthEdit.text()), float(self.dlg.ethEdit.text()))
+            self.mplCanvas.set_para(para)
         
     def play(self):
         self.mplCanvas.play()
         
+    def save(self):
+        pass
+        
+    def exit(self):
+        pass
         
 def main():
     '''
