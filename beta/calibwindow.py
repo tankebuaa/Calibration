@@ -13,7 +13,7 @@ class CalibWnd(Ui_CalibWindow):
         self.setupUi(self)
         self.setButton.clicked.connect(self.set_para)
         self.playButton.clicked.connect(self.play)
-        self.exitButton.clicked.connect(self.exit)
+        self.calibButton.clicked.connect(self.calibrate)
         self.saveButton.clicked.connect(self.save)
         
     def set_para(self):
@@ -28,11 +28,18 @@ class CalibWnd(Ui_CalibWindow):
     def play(self):
         self.mplCanvas.play()
         
-    def save(self):
-        pass
+    def calibrate(self):
+        self.mplCanvas.calibrate()
         
-    def exit(self):
-        pass
+    def save(self):
+        self.mplCanvas.save()
+        
+    def closeEvent(self, event):
+        msg = QtGui.QMessageBox.question(self, "Warning", "Are you sure to quit?", QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
+        if msg == QtGui.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
         
 def main():
     '''

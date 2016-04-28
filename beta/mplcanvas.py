@@ -1,5 +1,5 @@
 # -*- coding : utf-8 -*-
-
+import functools
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
@@ -8,6 +8,13 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolBar
 import datacalib as dc
+
+def log(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        print("running %s...."%func.__name__)
+        return func(*args, **kwargs)
+    return wrapper
 
 class MplData(object):
     '''
@@ -34,7 +41,13 @@ class MplData(object):
     def get_subpixel(self, point):
         return point
         
+    @log
+    def calibrate(self):
+        pass
         
+    @log
+    def save(self):
+        pass
         
 class MplCanvas(QtGui.QWidget):
     '''
@@ -89,7 +102,7 @@ class MplCanvas(QtGui.QWidget):
     def on_button_press(self, event):
         if event.inaxes is None:
             return
-        if event.button is 1:
+        if event.button == 1:
             #获得单击点作为估计值
             clickPoint = np.array([event.xdata, event.ydata])
             print(clickPoint)
@@ -109,7 +122,15 @@ class MplCanvas(QtGui.QWidget):
     def on_key_press(self, event):
         #绑定按键事件到画布和工具栏
         key_press_handler(event, self.canvas, self.toolbar)
-        if event.key is "enter":
+        if event.key == "enter":
             print(event.key)
-        elif event.key is "N":
+        elif event.key == "N":
             self.emit(QtCore.SIGNAL("play_next()"))
+            
+    def calibrate(self):
+        #是否满足标定条件
+        self.data.calibrate()
+        
+    def save(self):
+        #保存标定结果
+        self.data.save()
