@@ -7,7 +7,7 @@ from PyQt4 import QtGui, QtCore
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolBar
-import datacalib as dc
+import calibfunc
 
 def log(func):
     @functools.wraps(func)
@@ -27,7 +27,7 @@ class MplData(object):
         self.points = []#所有中心点
         
     def set_picName(self):#读入文件名列表
-        self.picName = dc.data_calib()
+        self.picName = calibfunc.get_file_name()
         
     def append_image(self):#读入文件名列表中的图片
         self.no += 1
@@ -39,6 +39,8 @@ class MplData(object):
         self.LINE_NUM,self.WND_R,self.DEL_R,self.HESSIAN_SIGMA,self.CONNECT_R,self.GRAY_THR,self.EIGVAL_THR=args[0]
         
     def get_subpixel(self, point):
+        point = get_subpix(self.images[self.no], point, self.WND_R, self.DEL_R, self.HESSIAN_SIGMA, self.CONNECT_R,\
+        self.GRAY_THR, self.EIGVAL_THR)
         return point
         
     @log
@@ -120,7 +122,7 @@ class MplCanvas(QtGui.QWidget):
             self.data.points[self.data.no].append(subpix)
             
     def on_key_press(self, event):
-        #绑定按键事件到画布和工具栏
+        #绑定键盘事件到画布和工具栏
         key_press_handler(event, self.canvas, self.toolbar)
         if event.key == "enter":
             print(event.key)
