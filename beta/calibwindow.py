@@ -21,8 +21,9 @@ class CalibWnd(Ui_CalibWindow):
         self.dlg.setupUi(self.dlg)
         if self.dlg.exec_():
             para = (int(self.dlg.numberEdit.text()), int(self.dlg.wndrEdit.text()),\
-            int(self.dlg.delrEdit.text()), float(self.dlg.hgEdit.text()), int(self.dlg.crEdit.text()),\
-            float(self.dlg.gthEdit.text()), float(self.dlg.ethEdit.text()))
+            int(self.dlg.delrEdit.text()), float(self.dlg.gsEdit.text()),\
+            float(self.dlg.hgEdit.text()), float(self.dlg.gthEdit.text()),\
+            float(self.dlg.ethEdit.text()), int(self.dlg.crEdit.text()))
             self.mplCanvas.set_para(para)
         
     def play(self):

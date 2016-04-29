@@ -36,11 +36,10 @@ class MplData(object):
         self.images.append(img)
         
     def set_para(self, *args):
-        self.LINE_NUM,self.WND_R,self.DEL_R,self.HESSIAN_SIGMA,self.CONNECT_R,self.GRAY_THR,self.EIGVAL_THR=args[0]
+        self.LINE_NUM,self.WND_R,self.DEL_R,self.BLUR_SIGMA,self.HESSIAN_SIGMA,self.GRAY_THR,self.EIGVAL_THR,self.CONNECT_R=args[0]
         
     def get_subpixel(self, point):
-        point = get_subpix(self.images[self.no], point, self.WND_R, self.DEL_R, self.HESSIAN_SIGMA, self.CONNECT_R,\
-        self.GRAY_THR, self.EIGVAL_THR)
+        point = calibfunc.get_subpix(self.images[self.no], point, self.WND_R, self.DEL_R, self.BLUR_SIGMA, self.HESSIAN_SIGMA, self.GRAY_THR, self.EIGVAL_THR, self.CONNECT_R)
         return point
         
     @log
