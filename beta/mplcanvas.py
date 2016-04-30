@@ -109,6 +109,7 @@ class MplCanvas(QtGui.QWidget):
             print(clickPoint)
             #求出精确的中心点
             subpix = self.data.get_subpixel(clickPoint)
+            print(subpix)
             #标记出中心点
             ax = plt.gca()
             ax.hold(True)

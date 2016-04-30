@@ -56,7 +56,9 @@ def get_subpix(img, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR, EIGVA
     """
     p = hessian_points(img, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR, EIGVAL_THR)
     xv, xh = classify_points(p, CONNECT_R)
-    xc = compute_cross_point(xi, xv, xh)
+    xc = compute_cross_point(xv, xh, WND_R)
+    xi = [xc[0] + xi[0] - WND_R, xc[1] + xi[1] - WND_R]
+    return xi
     
     
 def hessian_points(image, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR, EIGVAL_THR):
@@ -69,17 +71,16 @@ def hessian_points(image, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR,
     roi = np.double(image[xi[1]-WND_R : xi[1]+WND_R+1, xi[0]-WND_R : xi[0]+WND_R+1])/255.0
     
     #高斯平滑
-    blurMask = 2 * np.ceil(3 * BLUR_SIGMA) + 1
+    blurMask = np.int(2 * np.ceil(3 * BLUR_SIGMA) + 1)
     img = cv2.GaussianBlur(roi, (blurMask,blurMask), BLUR_SIGMA)
-    
     #计算二维高斯核的一阶和二阶微分
-    mask = np.ceil(3 * HESSIAN_SIGMA)
-    
-    Gx = np.zeros((2*mask+1， 2*mask+1), dtype = np.double)
-    Gy = np.zeros((2*mask+1， 2*mask+1), dtype = np.double)
-    Gxx = np.zeros((2*mask+1， 2*mask+1), dtype = np.double)
-    Gxy = np.zeros((2*mask+1， 2*mask+1), dtype = np.double)
-    Gyy = np.zeros((2*mask+1， 2*mask+1), dtype = np.double)
+    mask = np.int(np.ceil(3 * HESSIAN_SIGMA))
+    md = 2*mask +1
+    Gx = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
+    Gy = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
+    Gxx = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
+    Gxy = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
+    Gyy = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
     
     for i in range(-mask, mask+1):
         for j in range(-mask, mask+1):
@@ -90,22 +91,22 @@ def hessian_points(image, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR,
             Gyy[i+mask, j+mask] = (i**2 - HESSIAN_SIGMA**2) * np.exp(-0.5*(i**2 + j*2) / HESSIAN_SIGMA**2) / (2*np.pi*HESSIAN_SIGMA**6)
     
     #高斯核与图像卷积作为导数
-    gx = cv2.filter2D(img, -1, Gx，borderType = cv2.BORDER_CONSTANT)
-    gy = cv2.filter2D(img, -1, Gy，borderType = cv2.BORDER_CONSTANT)
-    gxx = cv2.filter2D(img, -1, Gxx，borderType = cv2.BORDER_CONSTANT)
-    gxy = cv2.filter2D(img, -1, Gxy，borderType = cv2.BORDER_CONSTANT)
-    Gyy = cv2.filter2D(img, -1, Gyy，borderType = cv2.BORDER_CONSTANT)
+    gx = cv2.filter2D(img, -1, Gx, borderType = cv2.BORDER_CONSTANT)
+    gy = cv2.filter2D(img, -1, Gy, borderType = cv2.BORDER_CONSTANT)
+    gxx = cv2.filter2D(img, -1, Gxx, borderType = cv2.BORDER_CONSTANT)
+    gxy = cv2.filter2D(img, -1, Gxy, borderType = cv2.BORDER_CONSTANT)
+    gyy = cv2.filter2D(img, -1, Gyy, borderType = cv2.BORDER_CONSTANT)
     
     #提取亚像素线条中心
     p = []
-    DEL_RR = DELR**2
-    for i in range(2*WND_R+2):
-        for j in range(2*WND_R+2):
+    DEL_RR = DEL_R**2
+    for i in range(2*WND_R+1):
+        for j in range(2*WND_R+1):
             if img[i,j] > GRAY_THR and (i-WND_R)**2 + (j-WND_R)**2 > DEL_RR:
                 hessian = np.array([[gxx[i,j], gxy[i,j]], [gxy[i,j], gyy[i,j]]])
                 w, v= LA.eig(hessian)
                 d = max(w)
-                vector = v[:, w.index(d)]
+                vector = v[:, list(w).index(d)]
                 #大于阈值，则认为是中心点
                 if abs(d) > EIGVAL_THR:
                     nx, ny = vector
@@ -132,12 +133,12 @@ def classify_points(p, CONNECT_R):
         while flag == 1:
             flag = 0
             j = 0
-            while j < len(c)
+            while j < len(c):
                 t = 0
-                for k in range(len(p):
-                    if max(abs(round(p[k-t] - c[j]))) <= CONNECT_R:
+                for k in range(len(p)):
+                    if max([abs(round(p[k-t][0] - c[j][0])), abs(round(p[k-t][1] - c[j][1]))]) <= CONNECT_R:
                         flag = 1
-                        c.append(p.pop[k-t])
+                        c.append(p.pop(k-t))
                         t = t + 1
                 j = j + 1
         if len(c) >= 10:
@@ -149,14 +150,14 @@ def classify_points(p, CONNECT_R):
         c = np.asarray(i)
         k = np.polyfit(c[:,0], c[:,1], 1)
         pa.append(k[0])
-    flag = 0
+    n = 0
     for i in range(1, len(cp)):
         if abs(np.arctan((pa[i] - pa[0]) / (1 + pa[i] * pa[0]))) / np.pi * 180 < 30:
-            flag = 1
+            n = i
             break
     xh = []
-    if flag == 1:
-        xv = np.asarray(cp.pop(0) + cp.pop(i))
+    if n > 0:
+        xv = np.asarray(cp.pop(0) + cp.pop(n - 1))
         for i in cp:
             xh = xh + i
         xh = np.asarray(xh)
@@ -166,14 +167,36 @@ def classify_points(p, CONNECT_R):
             xh = xh + i
         xh = np.asarray(xh)
         
-        
+    return [xv, xh]
         
     
-def compute_cross_point(xi, xv, xh):
+def compute_cross_point(xv, xh, WND_R):
     """拟合两条线段，并求出交点作为亚像素中心点
     @param xv, xh 两条线条中心点
     
     @return xi 亚像素中心点 
     """
-    
-    pass
+    x0 = [WND_R, WND_R]
+    xc = [0,0]
+    #抛物线拟合近似椭圆
+    v = np.polyfit(xv[:,0], xv[:,1], 2)
+    h = np.polyfit(xh[:,0], xh[:,1], 2)
+    #解出交点
+    a = v[0] - h[0]
+    b = v[1] - h[1]
+    c = v[2] - h[2]
+    delta = b**2 - 4*a*c
+    if delta >= 0:
+        s = np.sqrt(delta)
+        x1 = (-b - s) / (2 * a)
+        x2 = (-b + s) / (2 * a)
+        distance = lambda x: abs((x-x0[0])) + abs((v[0]*x**2 + v[1]*x + v[2] - x0[1]))
+        if distance(x1) < distance(x2):
+            xc[0] = x1
+            xc[1] = v[0]*x1**2 + v[1]*x1 + v[2]
+        else:
+            xc[0] = x2
+            xc[1] = v[0]*x2**2 + v[1]*x2 + v[2]
+    else:
+        xc = x0
+    return xc
