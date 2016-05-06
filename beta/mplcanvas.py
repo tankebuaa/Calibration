@@ -24,7 +24,9 @@ class MplData(object):
         self.picName = []#存放文件名的list
         self.images = []#保存图像的list，元素为mat
         self.no = -1#当前指向图像的序号
-        self.points = []#所有中心点
+        self.points = [[]]#所有中心点
+        self.nc = 0#当前指向单应（points元素）的序号
+        self.H = []#所有单应矩阵列表
         
     def set_picName(self):#读入文件名列表
         self.picName = calibfunc.get_file_name()
@@ -42,6 +44,12 @@ class MplData(object):
     def get_subpixel(self, point):
         point = calibfunc.get_subpix(self.images[self.no], point, self.WND_R, self.DEL_R, self.BLUR_SIGMA, self.HESSIAN_SIGMA, self.GRAY_THR, self.EIGVAL_THR, self.CONNECT_R)
         return point
+        
+    def get_homo(self):
+        homo = calibfunc.solve_homo(self.points[self.nc], self.LINE_NUM)
+        self.points.append([])
+        self.H.append(homo)
+        self.nc += 1
         
     @log
     def calibrate(self):
@@ -96,7 +104,6 @@ class MplCanvas(QtGui.QWidget):
             ax.imshow(self.data.images[self.data.no], cmap = "gray")
             self.canvas.draw()
             print(">>> click the cross point on same circle...")
-            self.data.points.append([])
         except IndexError:
             print("There is no image!")
             pass
@@ -120,13 +127,13 @@ class MplCanvas(QtGui.QWidget):
             ax.set_ylim(y, 0)
             self.canvas.draw()
             #存入点列表
-            self.data.points[self.data.no].append(subpix)
+            self.data.points[self.data.nc].append(subpix)
             
     def on_key_press(self, event):
         #绑定键盘事件到画布和工具栏
         key_press_handler(event, self.canvas, self.toolbar)
         if event.key == "enter":
-            print(event.key)
+            self.data.get_homo()
         elif event.key == "N":
             self.emit(QtCore.SIGNAL("play_next()"))
             

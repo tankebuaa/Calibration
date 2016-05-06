@@ -3,7 +3,6 @@
 # used in mplcanvas.py
 
 import glob
-import matplotlib.pyplot as plt
 import numpy as np
 from numpy import linalg as LA
 import cv2
@@ -200,3 +199,103 @@ def compute_cross_point(xv, xh, WND_R):
     
     
 # --------------------------------------------------------compute_H---------------------------------------------------------------
+def solve_homo(p, ns):
+    """计算平面到图像的单应矩阵
+    @param p 图像上的点，传入的是一个列表，列表元素为array点22为矩阵
+    @param ns 球上点的数目
+    
+    @return H 单应
+    """
+    N = len(p)
+    # 先将图像点转化为二维数组m
+    m = np.ones((3, N), dtype = np.double)
+    for i in range(N):
+        m[0,i] = p[i][0]
+        m[1,i] = p[i][1]
+        
+    # 计算空间点
+    M = np.ones((3, N), dtype = np.double)
+    for i in range(N):
+        M[0, i] = np.cos(2*(i + round(N/2))*np.pi/ns)
+        M[1, i] = np.sin(2*(i + round(N/2))*np.pi/ns)
+    # 归一化图像点
+    ax = m[0, :]
+    ay = m[1, :]
+    
+    mxx = np.mean(ax)
+    myy = np.mean(ay)
+    
+    ax = ax - mxx
+    ay = ay - myy
+    
+    scxx = np.mean(np.abs(ax))
+    scyy = np.mean(np.abs(ay))
+    
+    Hnorm = np.array([[1/scxx, 0, -mxx/scxx], [0, 1/scyy, -myy/scyy], [0,0,1]])
+    invHnorm = np.array([[scxx , 0, mxx], [0, scyy, myy], [0,0,1]])
+    
+    mn = Hnorm @ m
+    # Compute the homography between m and mn
+    # build the matix
+    L = np.zeros((2*N, 9), dtype = np.double)
+    L[0:2*N:2, 0:3] = M.T
+    L[1:2*N:2, 3:6] = M.T
+    L[0:2*N:2, 6:9] = -((np.ones((3,1)) @ mn[0:1,:]) * M).T
+    L[1:2*N:2, 6:9] = -((np.ones((3,1)) @ mn[1:2,:]) * M).T
+    
+    L = L.T @ L
+    U, S, V = np.linalg.svd(L, full_matrices = True)
+    hh = V[:, 8]
+    hh = hh / hh[8]
+    
+    Hrem = hh.reshape((3,3))
+    
+    # Final homography:
+    H = invHnorm @ Hrem
+    
+    print(H)
+    '''
+    # Homography refinement if there are more than 4 points
+    if N > 4:
+        # Final refinement
+        hhv = (H.T).reshape((1,9))
+        hhv = hhv[0, 0:8]
+        
+        for iter in range(10):
+            
+            mrep = H @ M
+            
+            J = np.zeros((2*N, 8))
+            
+            MMM = M/(np.ones((3,1)) @ mrep[2:3,:])
+            
+            J[0:2*N:2, 0:3] = -MMM.T
+            J[1:2*N:2, 3:6] = -MMM.T
+            
+            mrep = mrep/(np.ones((3,1)) @ mrep[2:3,:])
+            
+            m_err = m[0:2,:] - mrep[0:2,:]
+            m_err = np.array(m_err.flat)
+            
+            MMM2 = (np.ones((3,1)) @ mrep[0:1, :]) * MMM
+            MMM3 = (np.ones((3,1)) @ mrep[1:2, :]) * MMM
+            
+            J[0:2*N:2, 6:8] = MMM2[0:2, :].T
+            J[1:2*N:2, 6:8] = MMM3[0:2, :].T
+            
+            MMM = (M /(np.ones((3,1)) @ mrep[2:3, :])).T
+            hh_innov = np.linalg.inv(J.T @ J) @ J.T @ m_err
+            hhv_up = hhv - hh_innov
+            
+            temp = list(hhv_up)
+            temp.append(1.0)
+            hhv_up_p = np.array(temp, dtype = np.double)
+            
+            H_up = hhv_up_p.reshape((3,3)).T
+            
+            hhv = hhv_up
+            H = H_up
+            
+    print(H)
+    '''
+    return H
