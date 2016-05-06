@@ -3,6 +3,7 @@
 # used in mplcanvas.py
 
 import glob
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy import linalg as LA
 import cv2
@@ -57,7 +58,7 @@ def get_subpix(img, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR, EIGVA
     p = hessian_points(img, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR, EIGVAL_THR)
     xv, xh = classify_points(p, CONNECT_R)
     xc = compute_cross_point(xv, xh, WND_R)
-    xi = [xc[0] + xi[0] - WND_R, xc[1] + xi[1] - WND_R]
+    xi = [xc[0] + xi[0] - 2*WND_R, xc[1] +xi[1] - 2*WND_R]
     return xi
     
     
@@ -68,14 +69,13 @@ def hessian_points(image, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR,
     @return p 亚像素中心点，列表
     """
     #处理区域
-    roi = np.double(image[xi[1]-WND_R : xi[1]+WND_R+1, xi[0]-WND_R : xi[0]+WND_R+1])/255.0
+    roi = image[xi[1]-2*WND_R : xi[1]+2*WND_R+1, xi[0]-2*WND_R : xi[0]+2*WND_R+1]
     
     #高斯平滑
-    blurMask = np.int(2 * np.ceil(3 * BLUR_SIGMA) + 1)
+    blurMask = max(np.int(2 * np.floor(3 * BLUR_SIGMA) + 1), 3)
     img = cv2.GaussianBlur(roi, (blurMask,blurMask), BLUR_SIGMA)
     #计算二维高斯核的一阶和二阶微分
-    mask = np.int(np.ceil(3 * HESSIAN_SIGMA))
-    md = 2*mask +1
+    mask = np.int(np.floor(3 * HESSIAN_SIGMA))
     Gx = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
     Gy = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
     Gxx = np.zeros((2*mask+1, 2*mask+1), dtype = np.double)
@@ -84,33 +84,34 @@ def hessian_points(image, xi, WND_R, DEL_R, BLUR_SIGMA, HESSIAN_SIGMA, GRAY_THR,
     
     for i in range(-mask, mask+1):
         for j in range(-mask, mask+1):
-            Gx[i+mask, j+mask] = -j*np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2*np.pi*HESSIAN_SIGMA**4)
-            Gy[i+mask, j+mask] = -i*np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2*np.pi*HESSIAN_SIGMA**4)
-            Gxx[i+mask, j+mask] = (j**2 - HESSIAN_SIGMA**2) * np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2*np.pi*HESSIAN_SIGMA**6)
-            Gxy[i+mask, j+mask] = i * j * np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2*np.pi*HESSIAN_SIGMA**6)
-            Gyy[i+mask, j+mask] = (i**2 - HESSIAN_SIGMA**2) * np.exp(-0.5*(i**2 + j*2) / HESSIAN_SIGMA**2) / (2*np.pi*HESSIAN_SIGMA**6)
+            Gx[i+mask, j+mask] = -j*np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2.0*np.pi*HESSIAN_SIGMA**4)
+            Gy[i+mask, j+mask] = -i*np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2.0*np.pi*HESSIAN_SIGMA**4)
+            Gxx[i+mask, j+mask] = (j**2 - HESSIAN_SIGMA**2) * np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2.0*np.pi*HESSIAN_SIGMA**6)
+            Gxy[i+mask, j+mask] = i * j * np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2.0*np.pi*HESSIAN_SIGMA**6)
+            Gyy[i+mask, j+mask] = (i**2 - HESSIAN_SIGMA**2) * np.exp(-0.5*(i**2 + j**2) / HESSIAN_SIGMA**2) / (2.0*np.pi*HESSIAN_SIGMA**6)
     
     #高斯核与图像卷积作为导数
-    gx = cv2.filter2D(img, -1, Gx, borderType = cv2.BORDER_CONSTANT)
-    gy = cv2.filter2D(img, -1, Gy, borderType = cv2.BORDER_CONSTANT)
-    gxx = cv2.filter2D(img, -1, Gxx, borderType = cv2.BORDER_CONSTANT)
-    gxy = cv2.filter2D(img, -1, Gxy, borderType = cv2.BORDER_CONSTANT)
-    gyy = cv2.filter2D(img, -1, Gyy, borderType = cv2.BORDER_CONSTANT)
+    gx = cv2.filter2D(img, -1, cv2.flip(Gx, -1), borderType = cv2.BORDER_CONSTANT)
+    gy = cv2.filter2D(img, -1, cv2.flip(Gy, -1), borderType = cv2.BORDER_CONSTANT)
+    gxx = cv2.filter2D(img, -1, cv2.flip(Gxx, -1), borderType = cv2.BORDER_CONSTANT)
+    gxy = cv2.filter2D(img, -1, cv2.flip(Gxy, -1), borderType = cv2.BORDER_CONSTANT)
+    gyy = cv2.filter2D(img, -1, cv2.flip(Gyy, -1), borderType = cv2.BORDER_CONSTANT)
     
     #提取亚像素线条中心
     p = []
     DEL_RR = DEL_R**2
-    for i in range(2*WND_R+1):
-        for j in range(2*WND_R+1):
-            if img[i,j] > GRAY_THR and (i-WND_R)**2 + (j-WND_R)**2 > DEL_RR:
-                hessian = np.array([[gxx[i,j], gxy[i,j]], [gxy[i,j], gyy[i,j]]])
+    for i in range(WND_R, 3*WND_R + 1):
+        for j in range(WND_R, 3*WND_R + 1):
+            if img[i,j] > GRAY_THR and (i-2*WND_R)**2 + (j-2*WND_R)**2 > DEL_RR:
+                hessian = np.array([[gxx[i,j], gxy[i,j]], [gxy[i,j], gyy[i,j]]], dtype = np.double)
                 w, v= LA.eig(hessian)
+                w = abs(w)
                 d = max(w)
                 vector = v[:, list(w).index(d)]
                 #大于阈值，则认为是中心点
                 if abs(d) > EIGVAL_THR:
                     nx, ny = vector
-                    t = -(nx*gx[i,j] + ny*gy[i,j]) / (nx**2 * gxx[i,j] + 2*nx*ny*gxy[i,j] + ny**2 * gyy[i,j]);
+                    t = -(nx*gx[i,j] + ny*gy[i,j]) / (nx**2 * gxx[i,j] + 2*nx*ny*gxy[i,j] + ny**2 * gyy[i,j])
                     nx, ny = t*nx, t*ny
                     if abs(nx) <= 0.5 and abs(ny) <= 0.5:
                         p.append([j + nx, i + ny])
@@ -128,19 +129,15 @@ def classify_points(p, CONNECT_R):
     i = 0
     cp = []
     while i <= 3 and len(p) > 0:
-        c = [p.pop(0)];
-        flag = 1
-        while flag == 1:
-            flag = 0
-            j = 0
-            while j < len(c):
-                t = 0
-                for k in range(len(p)):
-                    if max([abs(round(p[k-t][0] - c[j][0])), abs(round(p[k-t][1] - c[j][1]))]) <= CONNECT_R:
-                        flag = 1
-                        c.append(p.pop(k-t))
-                        t = t + 1
-                j = j + 1
+        c = [p.pop(0)]
+        j = 0
+        while j < len(c):
+            t = 0
+            for k in range(len(p)):
+                if max([abs(round(p[k-t][0] - c[j][0])), abs(round(p[k-t][1] - c[j][1]))]) <= CONNECT_R:
+                    c.append(p.pop(k-t))
+                    t = t + 1
+            j = j + 1
         if len(c) >= 10:
             cp.append(c)
             i = i + 1
@@ -176,7 +173,7 @@ def compute_cross_point(xv, xh, WND_R):
     
     @return xi 亚像素中心点 
     """
-    x0 = [WND_R, WND_R]
+    x0 = [2*WND_R, 2*WND_R]
     xc = [0,0]
     #抛物线拟合近似椭圆
     v = np.polyfit(xv[:,0], xv[:,1], 2)
@@ -200,3 +197,6 @@ def compute_cross_point(xv, xh, WND_R):
     else:
         xc = x0
     return xc
+    
+    
+# --------------------------------------------------------compute_H---------------------------------------------------------------

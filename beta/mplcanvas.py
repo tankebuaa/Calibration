@@ -33,6 +33,7 @@ class MplData(object):
         self.no += 1
         name = self.picName[self.no]
         img = cv2.imread(name, 0)
+        img = np.double(img) / 255.0
         self.images.append(img)
         
     def set_para(self, *args):
@@ -105,7 +106,7 @@ class MplCanvas(QtGui.QWidget):
             return
         if event.button == 1:
             #获得单击点作为估计值
-            clickPoint = np.array([event.xdata, event.ydata])
+            clickPoint = np.array([event.xdata, event.ydata], dtype = np.int)
             print(clickPoint)
             #求出精确的中心点
             subpix = self.data.get_subpixel(clickPoint)
