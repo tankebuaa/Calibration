@@ -53,7 +53,8 @@ class MplData(object):
         
     @log
     def calibrate(self):
-        pass
+        self.K = calibfunc.solve_K(self.H)
+        print(self.K)
         
     @log
     def save(self):

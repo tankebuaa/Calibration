@@ -244,7 +244,7 @@ def solve_homo(p, ns):
     L[1:2*N:2, 6:9] = -((np.ones((3,1)) @ mn[1:2,:]) * M).T
     
     L = L.T @ L
-    U, S, V = np.linalg.svd(L, full_matrices = True)
+    U, S, V = LA.svd(L, full_matrices = True)
     hh = V[:, 8]
     hh = hh / hh[8]
     
@@ -298,4 +298,43 @@ def solve_homo(p, ns):
             
     print(H)
     '''
+    #验证
+    A = np.zeros((2, 6), dtype = np.double)
+    getV = lambda H, i, j: np.array([H[0,i]*H[0,j], H[0,i]*H[1,j] + H[1,i]*H[0,j], H[1,i]*H[1,j], H[2,i]*H[0,j] + H[0,i]*H[2,j],\
+    H[2,i]*H[1,j] + H[1,i]*H[2,j], H[2,i]*H[2,j]])
+    A[0, :] = getV(H, 0, 1)
+    A[1, :] = getV(H, 0, 0) - getV(H, 1, 1)
+    
+    #标准
+    K = np.array([[5114,0,831], [0,5114,608], [0,0,1]], dtype = np.double)
+    KKT = LA.inv(K@K.T)
+    MZZY = np.array([[KKT[0,0], KKT[0,1], KKT[1,1], KKT[0,2], KKT[1,2], KKT[2,2]]], dtype = np.double)
+    print("残差:")
+    print(A@MZZY.T)
     return H
+    
+#---------------------------------------------------------calibrate-----------------------------------------------------
+def solve_K(Hs):
+    """计算内参
+    @param Hs 包含单应的列表
+    
+    @return K 摄像机内参
+    """
+    N = len(Hs)
+    A = np.zeros((2*N, 6), dtype = np.double)
+    getV = lambda H, i, j: np.array([H[0,i]*H[0,j], H[0,i]*H[1,j] + H[1,i]*H[0,j], H[1,i]*H[1,j], H[2,i]*H[0,j] + H[0,i]*H[2,j],\
+    H[2,i]*H[1,j] + H[1,i]*H[2,j], H[2,i]*H[2,j]])
+    for i in range(N):
+        A[2*i, :] = getV(Hs[i], 0, 1)
+        A[2*i + 1, :] = getV(Hs[i], 0, 0) - getV(Hs[i], 1, 1)
+    U, S, V = LA.svd(A, full_matrices=1)
+    w = np.array([[V[0,5], V[1,5], V[3,5]], [V[1,5], V[2,5], V[4,5]], [V[3,5], V[4,5], V[5,5]]])
+    w_ = LA.inv(w)
+    w_ = w_/w_[2,2]
+    ux = w_[0,2]
+    uy = w_[1,2]
+    fx = np.sqrt(w_[0,0] - ux*ux)
+    fy = np.sqrt(w_[1,1] - uy*uy)
+    K = np.array([[fx, 0, ux], [0, fy, uy], [0, 0, 1.0]], dtype = np.double)
+    
+    return K
