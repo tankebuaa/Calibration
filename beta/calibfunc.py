@@ -231,8 +231,8 @@ def solve_homo(p, ns):
     scxx = np.mean(np.abs(ax))
     scyy = np.mean(np.abs(ay))
     
-    Hnorm = np.array([[1/scxx, 0, -mxx/scxx], [0, 1/scyy, -myy/scyy], [0,0,1]])
-    invHnorm = np.array([[scxx , 0, mxx], [0, scyy, myy], [0,0,1]])
+    Hnorm = np.array([[1/scxx, 0, -mxx/scxx], [0, 1/scyy, -myy/scyy], [0,0,1]], dtype = np.double)
+    invHnorm = np.array([[scxx , 0, mxx], [0, scyy, myy], [0,0,1]], dtype = np.double)
     
     mn = Hnorm @ m
     # Compute the homography between m and mn
